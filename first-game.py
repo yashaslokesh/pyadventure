@@ -134,11 +134,9 @@ while running:
     ball_speed = []
     # If ball and ka sprite are colliding
     # if ball.rect.colliderect(ka.rect):
-        
 
-
-    ka.update(screen=screen, sprite_speed=sprite_speed)
-    ball.update(screen=screen, sprite_speed=[0, 0])
+    ka.update(screen=screen)
+    ball.update(screen=screen)
 
     # Draw text
     # intro.draw(screen=screen)
