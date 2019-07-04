@@ -4,14 +4,27 @@ import pygame
 import os
 import math
 # Works if run from the base directory
-import core.images as images
+
+from .images import load_image
+
+from enum import (
+    Enum,
+    auto
+)
 
 # def load_image(path):
 #     image = pygame.image.load(os.path.join('assets', 'images', path))
 #     image = image.convert_alpha()
 #     return image
 
-class GameSprite(pygame.sprite.Sprite):
+
+class PlayerStates(Enum):
+    STANDING = 1
+    WALK_LEFT = 2
+    WALK_RIGHT = 3
+    TALKING = 4
+
+class Player(pygame.sprite.DirtySprite):
     """ This class will control the player sprite.
     
     self.animations is a dictionary with (str, animation sequence) pairs. The str represents the name of an animation,
@@ -50,33 +63,45 @@ class GameSprite(pygame.sprite.Sprite):
         self.active_anim = None
         self.rect = None
 
-    def add_animation(self, animation_name : str, animation_sequence, path : str, move_animation : bool = False):
+        self.active_state = None
+
+    def add_animation(self, anim_state: PlayerStates, anim_seq: list, path: str, move_animation: bool = False):
         """ 
         Add animations with an identifying "animation_name" tag, along with a sequence of numbers
         for the animation sequence (that double as the image file names), and the path to image files
         of the animation 
         """
 
-        self.animations[animation_name] = animation_sequence
-        self.images[animation_name] = []
+        self.animations[anim_state] = anim_seq
+        self.images[anim_state] = []
 
         if move_animation:
-            self.move_animations.add(animation_name)
+            self.move_animations.add(anim_state)
 
         """Loads each image only once into another dictionary containing a list of images for each animation sequence"""
-        animation_image_frames = sorted([i for i in set(animation_sequence)])
+        animation_image_frames = sorted([i for i in set(anim_seq)])
 
         for frame in animation_image_frames:
-            image = images.load_image(os.path.join(path, f'{frame}.png'))
-            (self.images[animation_name]).append(image)
+            image = load_image(os.path.join(path, f'{frame}.png'))
+            (self.images[anim_state]).append(image)
 
-    def set_active_animation(self, animation_name : str):
-        """ Pass in a string representing the active animation, and the sprite will use that
-        animation on the next update cycle. This method must be called once before the sprite's
-        update method is used. """
+        # Sets active state
+        self.set_active_state(anim_state)
 
-        if animation_name not in self.animations:
-            raise ValueError('An animation that does not exist was chosen. Please add it first')
+    def set_active_state(self, new_state: PlayerStates):
+        """ Pass in the new state, alter the sprite's properties based on the new state.
+        The active state is automatically set to the most recent state for which an animation was added
+        using add_animation(). This method takes care of changing animations
+        """
+
+        self.active_state = new_state
+
+        self._update_state_animation()
+
+    def _update_state_animation(self):
+        """ Should not have to call this method, is automatically called when state is changed """
+
+        self.anim_frame = 0.00
 
         if self.rect is None:
             """ If the active animation hasn't been set yet, then we want to start from a pre-determined location. """
@@ -85,32 +110,54 @@ class GameSprite(pygame.sprite.Sprite):
             """ Else we start from the previous location """
             x, y = self.rect.x, self.rect.y
 
-        """ Set active animation string, to be used in update() """
-        self.active_anim = animation_name
-
-        self.anim_frame = 0.00
-
-        """ Set first image in animation sequence to be the sprite's image """
-        animation_image_num = self.animations[self.active_anim][0]
-        self.image = self.images[self.active_anim][animation_image_num]
+        first_image_num = self.animations[self.active_state][0]
+        self.image = self.images[self.active_state][first_image_num]
 
         self.rect = self.image.get_rect()
 
-        self.rect.x = x
-        self.rect.y = y
+        self.rect.x, self.rect.y = x, y
+
+
+    # def set_active_animation(self, animation_name : str):
+    #     """ Pass in a string representing the active animation, and the sprite will use that
+    #     animation on the next update cycle. This method must be called once before the sprite's
+    #     update method is used. """
+    #
+    #     if animation_name not in self.animations:
+    #         raise ValueError('An animation that does not exist was chosen. Please add it first')
+    #
+    #     if self.rect is None:
+    #         """ If the active animation hasn't been set yet, then we want to start from a pre-determined location. """
+    #         x, y = self.START_LOCATION
+    #     else:
+    #         """ Else we start from the previous location """
+    #         x, y = self.rect.x, self.rect.y
+    #
+    #     """ Set active animation string, to be used in update() """
+    #     self.active_anim = animation_name
+    #
+    #     self.anim_frame = 0.00
+    #
+    #     """ Set first image in animation sequence to be the sprite's image """
+    #     animation_image_num = self.animations[self.active_anim][0]
+    #     self.image = self.images[self.active_anim][animation_image_num]
+    #
+    #     self.rect = self.image.get_rect()
+    #
+    #     self.rect.x = x
+    #     self.rect.y = y
     
     def get_active_animation(self):
         """
         Returns the string representation for the active animation from when it was added.
         """
         return self.active_anim
-    
 
     def update(self, screen : pygame.surface.Surface, sprite_speed : list):
         """ 
         Move_sprite will be true if the speed has some non-zero value. Granted, it is only ever a two-element list,
         but using the any() function makes it clean to read.
-        
+
         If the animation is supposed to be updated, it will be. Otherwise, nothing happens to the sprite's current
         image and rect and animation frame, and we draw the sprite again. """
         move_sprite = any(speed != 0 for speed in sprite_speed)
