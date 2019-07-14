@@ -1,3 +1,9 @@
+"""
+USED ONLY FOR REFERENCE -
+There were some things I implemented in this file that have not been implemented in the other main "game.py" file yet,
+so this file is being kept for reference for when I want to implement those things.
+"""
+
 import pygame
 import os
 import math
