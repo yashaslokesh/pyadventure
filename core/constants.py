@@ -1,1 +1,6 @@
-screen_size = screen_width, screen_height = 800, 800
+# Colors
+BLACK = 0, 0, 0
+
+SCREEN_SIZE = SCREEN_WIDTH, SCREEN_HEIGHT = 800, 800
+
+TILE_SIZE = TILE_WIDTH, TILE_HEIGHT = 80, 80

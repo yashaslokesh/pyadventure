@@ -1,19 +1,19 @@
 """ This module contains all sprite definitions used in the game """
 
+import math
+import os
+from enum import (
+    Enum
+)
+
 import pygame
 from pygame.locals import *
 
-import os
-import math
-# Works if run from the base directory
-
-from .images import load_image
 from .constants import *
+from .images import load_image
 
-from enum import (
-    Enum,
-    auto
-)
+
+# Works if run from the base directory
 
 # def load_image(path):
 #     image = pygame.image.load(os.path.join('assets', 'images', path))
@@ -26,6 +26,7 @@ class PlayerStates(Enum):
     WALK_LEFT = 2
     WALK_RIGHT = 3
     TALKING = 4
+
 
 class Player(pygame.sprite.DirtySprite):
     """ This class will control the player sprite.
@@ -42,7 +43,7 @@ class Player(pygame.sprite.DirtySprite):
     """
 
     def __init__(self, start_x, start_y):
-        pygame.sprite.Sprite.__init__(self)
+        pygame.sprite.DirtySprite.__init__(self)
 
         """ 
         Initializes all dictionaries used for storing various animation values, all dictionaries have animation names
@@ -172,7 +173,7 @@ class Player(pygame.sprite.DirtySprite):
 
         if keys[K_RIGHT]:
             self.set_active_state(PlayerStates.WALK_RIGHT)
-            if self.rect.x + self.rect.width + 5 <= screen_width:
+            if self.rect.x + self.rect.width + 5 <= SCREEN_WIDTH:
                 horiz_speed = 5
 
         if keys[K_LEFT]:
@@ -187,7 +188,7 @@ class Player(pygame.sprite.DirtySprite):
 
         if keys[K_DOWN]:
             if self._active_state in (PlayerStates.WALK_LEFT, PlayerStates.WALK_RIGHT):
-                if self.rect.y + self.rect.height + 5 <= screen_height:
+                if self.rect.y + self.rect.height + 5 <= SCREEN_HEIGHT:
                     vert_speed = 5
 
         return [horiz_speed, vert_speed]
@@ -202,9 +203,11 @@ class Player(pygame.sprite.DirtySprite):
         sprite_speed = self._handle_input(keys)
         move_sprite = any(speed != 0 for speed in sprite_speed)
 
+        ## TODO: Add sprite to LayeredDirty group for easier DirtySprite drawing, in another controller file or game.py
         if ((self.active_state in self.move_animations and move_sprite) or
                 self.active_anim not in self.move_animations):
-            self._update_animation(sprite_speed)
+            prev_rect = self._update_animation(sprite_speed)
+            pygame.draw.rect(screen, BLACK, prev_rect)
 
         screen.blit(self.image, self.rect)
         
@@ -224,5 +227,8 @@ class Player(pygame.sprite.DirtySprite):
 
         self.image = self.images[self.active_state][animation_image_num]
 
+        prev_rect = self.rect.copy()
+
         self.rect = self.rect.move(sprite_speed)
 
+        return prev_rect
