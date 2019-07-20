@@ -2,9 +2,7 @@
 
 import math
 import os
-from enum import (
-    Enum
-)
+from enum import Enum
 
 import pygame
 from pygame.locals import *
@@ -28,6 +26,7 @@ class PlayerStates(Enum):
     TALKING = 4
 
 
+##
 class Player(pygame.sprite.DirtySprite):
     """ This class will control the player sprite.
     
@@ -63,13 +62,19 @@ class Player(pygame.sprite.DirtySprite):
         self.animation_speed = 0.10
 
         self.move_animations = set()
-        
+
         self.active_anim = None
         self.rect = None
 
         self._active_state = None
 
-    def add_animation(self, anim_state: PlayerStates, anim_seq: list, path: str, move_animation: bool = False):
+    def add_animation(
+            self,
+            anim_state: PlayerStates,
+            anim_seq: list,
+            path: str,
+            move_animation: bool = False,
+    ):
         """ 
         Add animations with an identifying "animation_name" tag, along with a sequence of numbers
         for the animation sequence (that double as the image file names), and the path to image files
@@ -86,7 +91,7 @@ class Player(pygame.sprite.DirtySprite):
         animation_image_frames = sorted([i for i in set(anim_seq)])
 
         for frame in animation_image_frames:
-            image = load_image(os.path.join(path, f'{frame}.png'))
+            image = load_image(os.path.join(path, f"{frame}.png"))
             (self.images[anim_state]).append(image)
 
         # Sets active state
@@ -125,7 +130,6 @@ class Player(pygame.sprite.DirtySprite):
 
         self.rect.x, self.rect.y = x, y
 
-
     # def set_active_animation(self, animation_name : str):
     #     """ Pass in a string representing the active animation, and the sprite will use that
     #     animation on the next update cycle. This method must be called once before the sprite's
@@ -154,7 +158,7 @@ class Player(pygame.sprite.DirtySprite):
     #
     #     self.rect.x = x
     #     self.rect.y = y
-    
+
     def get_active_animation(self):
         """
         Returns the string representation for the active animation from when it was added.
@@ -165,7 +169,9 @@ class Player(pygame.sprite.DirtySprite):
         return self._active_state
 
     """ Define active_state as a property with the previously defined getter and setter functions """
-    active_state = property(get_active_state, set_active_state, doc="Activate state of this player")
+    active_state = property(
+        get_active_state, set_active_state, doc="Activate state of this player"
+    )
 
     def _handle_input(self, keys):
         horiz_speed = 0
@@ -182,18 +188,23 @@ class Player(pygame.sprite.DirtySprite):
                 horiz_speed = -5
 
         if keys[K_UP]:
-            if self._active_state in (PlayerStates.WALK_LEFT, PlayerStates.WALK_RIGHT):
-                if self.rect.y - 5 >= 0:
-                    vert_speed = -5
+            # if self._active_state in (PlayerStates.WALK_LEFT, PlayerStates.WALK_RIGHT):
+            if self.rect.y - 5 >= 0:
+                vert_speed = -5
 
         if keys[K_DOWN]:
-            if self._active_state in (PlayerStates.WALK_LEFT, PlayerStates.WALK_RIGHT):
-                if self.rect.y + self.rect.height + 5 <= SCREEN_HEIGHT:
-                    vert_speed = 5
+            # if self._active_state in (PlayerStates.WALK_LEFT, PlayerStates.WALK_RIGHT):
+            if self.rect.y + self.rect.height + 5 <= SCREEN_HEIGHT:
+                vert_speed = 5
+
+        ## TODO: Determine if this is the best way to switch a moving state to a neutral state... maybe make FSM?
+        if all(i == 0 for i in (horiz_speed, vert_speed)):
+            self.set_active_state(PlayerStates.TALKING)
 
         return [horiz_speed, vert_speed]
 
-    def update(self, screen: pygame.surface.Surface, keys):
+    ## TODO: Currently returns Rect so Game class can draw background over previous position, but there might be a better way
+    def update(self, keys):
         """ 
         Move_sprite will be true if the speed has some non-zero value. Granted, it is only ever a two-element list,
         but using the any() function makes it clean to read.
@@ -203,15 +214,22 @@ class Player(pygame.sprite.DirtySprite):
         sprite_speed = self._handle_input(keys)
         move_sprite = any(speed != 0 for speed in sprite_speed)
 
-        ## TODO: Add sprite to LayeredDirty group for easier DirtySprite drawing, in another controller file or game.py
-        if ((self.active_state in self.move_animations and move_sprite) or
-                self.active_anim not in self.move_animations):
-            prev_rect = self._update_animation(sprite_speed)
-            pygame.draw.rect(screen, BLACK, prev_rect)
+        result = None
 
+        ## TODO: Add sprite to LayeredDirty group for easier DirtySprite drawing, in another controller file or game.py
+        if (
+                self.active_state in self.move_animations and move_sprite
+        ) or self.active_state not in self.move_animations:
+            prev_rect = self._update_animation(sprite_speed)
+            result = prev_rect
+            # pygame.draw.rect(screen, BLACK, prev_rect)
+
+        return result
+
+    def draw(self, screen: pygame.Surface):
         screen.blit(self.image, self.rect)
-        
-    def _update_animation(self, sprite_speed : list):
+
+    def _update_animation(self, sprite_speed: list):
         """
         Will be called if the sprite is supposed to move if the active animation is an animation of movement, or if
         the animation is a non-movement animation. This function just updates the image and the rectangle of the sprite.
@@ -223,7 +241,9 @@ class Player(pygame.sprite.DirtySprite):
         if self.anim_frame >= len(self.animations[self.active_state]):
             self.anim_frame = 0.00
 
-        animation_image_num = self.animations[self.active_state][math.floor(self.anim_frame)]
+        animation_image_num = self.animations[self.active_state][
+            math.floor(self.anim_frame)
+        ]
 
         self.image = self.images[self.active_state][animation_image_num]
 

@@ -6,24 +6,24 @@ import pygame
 
 
 class MapTileType(Enum):
-    wall = '#'
-    floor = '_'
+    wall = "#"
+    floor = "_"
 
 
 class MapController(object):
     def __init__(self, filename):
         self.key = {}
 
-        config = ConfigParser(comment_prefixes=';')
+        config = ConfigParser(comment_prefixes=";")
         config.read(filename)
-        self.map = config.get('world', 'map').split('\n')
+        self.map = config.get("world", "map").split("\n")
 
         ##
         self.tiles = MapController.setup_tiles()
 
         ## Let config file specify for easy reading
-        self.width = config.getint('world', 'width')
-        self.height = config.getint('world', 'height')
+        self.width = config.getint("world", "width")
+        self.height = config.getint("world", "height")
 
         ## Parse through symbol specs
         for section in config.sections():

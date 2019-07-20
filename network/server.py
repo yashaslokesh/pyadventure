@@ -1,10 +1,9 @@
-import socket
 import select
-import time
+import socket
 
 server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-host = '127.0.0.1'
+host = "127.0.0.1"
 port = 8080
 
 server_sock.bind((host, port))
@@ -20,19 +19,17 @@ while True:
     r, _, _ = select.select([client_sock], [], [], 0)
 
     if r:
-        print('There is data to be read on the server side client')
+        print("There is data to be read on the server side client")
     else:
-        print('There is not data to be read on the server side client')
+        print("There is not data to be read on the server side client")
 
     chunk = client_sock.recv(4096).decode()
-    print('[RECEIVED FROM CLIENT]: ' + chunk)
+    print("[RECEIVED FROM CLIENT]: " + chunk)
 
-
-
-    msg = 'Thanks for connecting to this server!'
-    print('[SENT FROM SERVER]: ' + msg)
+    msg = "Thanks for connecting to this server!"
+    print("[SENT FROM SERVER]: " + msg)
     sent = client_sock.send(msg.encode())
-    print(f'Sent value: {sent}')
+    print(f"Sent value: {sent}")
     client_sock.close()
     break
 
