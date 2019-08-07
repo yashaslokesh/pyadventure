@@ -18,6 +18,9 @@ class Game:
         self.player = self.setup_player()
         self.background = self.setup_maps()
 
+        self.map_sprite = MapController(os.path.join("maps", "world_1.map"))
+        self.map_sprite.render()
+
     ## Static for now, as we only return the player and don't change the class state
     @staticmethod
     def setup_player():
@@ -60,7 +63,11 @@ class Game:
         return setup_map_1()
 
     def run(self):
-        self.screen.blit(self.background, (0, 0))
+        background_offset = x_offset, y_offset = -80, -80
+
+        self.map_sprite.map_image.scroll(dx= x_offset, dy= y_offset)
+
+        self.screen.blit(self.map_sprite.map_image, (0, 0))
         print(self.background.get_size())
 
         running = True
@@ -73,6 +80,8 @@ class Game:
             # self.screen.fill(BLACK)
 
             prev_rect = self.player.update(keys)
+            # self.background.update(keys)
+            self.map_sprite.update(keys)
 
             if prev_rect is not None:
                 # self.screen.blit(self.background, (prev_rect.x, prev_rect.y), area=prev_rect)
@@ -80,6 +89,7 @@ class Game:
                 corner = prev_rect.x, prev_rect.y
                 self.screen.blit(self.background, corner, area=Rect(corner, (132, 240)))
 
+            self.map_sprite.draw(self.screen)
             self.player.draw(self.screen)
 
             pygame.display.flip()

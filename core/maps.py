@@ -4,6 +4,8 @@ from enum import Enum
 import core.constants as const
 import pygame
 
+from pygame.locals import *
+
 
 class MapTileType(Enum):
     wall = "#"
@@ -22,8 +24,11 @@ class MapController(object):
         self.tiles = MapController.setup_tiles()
 
         ## Let config file specify for easy reading
-        self.width = config.getint("world", "width")
-        self.height = config.getint("world", "height")
+        self.tiled_size = self.tiled_width, self.tiled_height = len(self.map[0]), len(self.map)
+
+        self.full_size = self.full_width, self.full_height = self.tiled_width * const.TILE_WIDTH, self.tiled_height * const.TILE_HEIGHT
+
+        # print(f'Width: {self.width}, Height: {self.height}')
 
         ## Parse through symbol specs
         for section in config.sections():
@@ -46,7 +51,7 @@ class MapController(object):
         return tiles
 
     def render(self) -> pygame.Surface:
-        map_image = pygame.Surface(const.SCREEN_SIZE)
+        map_image = pygame.Surface(self.full_size)
 
         for y, line in enumerate(self.map):
             for x, sym in enumerate(line):
@@ -55,4 +60,45 @@ class MapController(object):
                 map_image.blit(tile_surf, (x * const.TILE_WIDTH, y * const.TILE_HEIGHT))
 
         ## Returns the configured background image
+        self.map_image = map_image
+        self.rect = self.map_image.get_rect()
         return map_image
+
+    def draw(self, screen: pygame.Surface):
+        screen.blit(self.map_image, self.rect)
+
+    def _handle_input(self, keys):
+        horz_scroll = 0
+        vert_scroll = 0
+
+        # Move this map left to make it appear as if player is moving right
+        if keys[K_RIGHT]:
+            if self.rect.x >= 0:
+                horz_scroll = -5
+        
+        # Move surface right
+        if keys[K_LEFT]:
+            if self.rect.x + self.rect.width <= const.SCREEN_WIDTH:
+                horz_scroll = 5
+        
+        # Move down
+        if keys[K_UP]:
+            if self.rect.y + self.rect.height <= const.SCREEN_WIDTH:
+                vert_scroll = 5
+
+        # Move up
+        if keys[K_DOWN]:
+            if self.rect.y >= 0:
+                vert_scroll = -5
+
+        return [horz_scroll, vert_scroll]
+
+    def update(self, keys):
+        move_speed = self._handle_input(keys)
+
+        self.rect = self.rect.move(move_speed)
+
+
+
+
+

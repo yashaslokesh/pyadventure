@@ -34,7 +34,7 @@ class Player(pygame.sprite.DirtySprite):
     and the animation sequence is a list of numbers that specify the images that should be used in animation that 
     sequence.
 
-    self.active_anim is set to 'talking-sequence' starting off, because that's where the game will start.
+    self._active_state is set to 'talking-sequence' starting off, because that's where the game will start.
     
     self.anim_frame should be reset every time the animation is changed
 
@@ -63,7 +63,6 @@ class Player(pygame.sprite.DirtySprite):
 
         self.move_animations = set()
 
-        self.active_anim = None
         self.rect = None
 
         self._active_state = None
@@ -130,41 +129,6 @@ class Player(pygame.sprite.DirtySprite):
 
         self.rect.x, self.rect.y = x, y
 
-    # def set_active_animation(self, animation_name : str):
-    #     """ Pass in a string representing the active animation, and the sprite will use that
-    #     animation on the next update cycle. This method must be called once before the sprite's
-    #     update method is used. """
-    #
-    #     if animation_name not in self.animations:
-    #         raise ValueError('An animation that does not exist was chosen. Please add it first')
-    #
-    #     if self.rect is None:
-    #         """ If the active animation hasn't been set yet, then we want to start from a pre-determined location. """
-    #         x, y = self.START_LOCATION
-    #     else:
-    #         """ Else we start from the previous location """
-    #         x, y = self.rect.x, self.rect.y
-    #
-    #     """ Set active animation string, to be used in update() """
-    #     self.active_anim = animation_name
-    #
-    #     self.anim_frame = 0.00
-    #
-    #     """ Set first image in animation sequence to be the sprite's image """
-    #     animation_image_num = self.animations[self.active_anim][0]
-    #     self.image = self.images[self.active_anim][animation_image_num]
-    #
-    #     self.rect = self.image.get_rect()
-    #
-    #     self.rect.x = x
-    #     self.rect.y = y
-
-    def get_active_animation(self):
-        """
-        Returns the string representation for the active animation from when it was added.
-        """
-        return self.active_anim
-
     def get_active_state(self):
         return self._active_state
 
@@ -229,7 +193,7 @@ class Player(pygame.sprite.DirtySprite):
     def draw(self, screen: pygame.Surface):
         screen.blit(self.image, self.rect)
 
-    def _update_animation(self, sprite_speed: list):
+    def _update_animation(self, sprite_speed: list) -> pygame.Rect:
         """
         Will be called if the sprite is supposed to move if the active animation is an animation of movement, or if
         the animation is a non-movement animation. This function just updates the image and the rectangle of the sprite.
