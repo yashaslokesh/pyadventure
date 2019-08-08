@@ -73,22 +73,26 @@ class MapController(object):
 
         # Move this map left to make it appear as if player is moving right
         if keys[K_RIGHT]:
-            if self.rect.x >= 0:
+            # if self.rect.x >= 0:
+            if self.rect.x + self.full_width - 5 >= const.SCREEN_WIDTH:
                 horz_scroll = -5
         
         # Move surface right
         if keys[K_LEFT]:
-            if self.rect.x + self.rect.width <= const.SCREEN_WIDTH:
+            # if self.rect.x + self.rect.width <= const.SCREEN_WIDTH:
+            if self.rect.x + 5 <= 0:
                 horz_scroll = 5
         
         # Move down
         if keys[K_UP]:
-            if self.rect.y + self.rect.height <= const.SCREEN_WIDTH:
+            # if self.rect.y + self.rect.height <= const.SCREEN_WIDTH:
+            if self.rect.y + 5 <= 0:
                 vert_scroll = 5
 
         # Move up
         if keys[K_DOWN]:
-            if self.rect.y >= 0:
+            # if self.rect.y >= 0:
+            if self.rect.y + self.full_height - 5 >= const.SCREEN_HEIGHT:
                 vert_scroll = -5
 
         return [horz_scroll, vert_scroll]

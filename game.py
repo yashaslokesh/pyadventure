@@ -63,9 +63,9 @@ class Game:
         return setup_map_1()
 
     def run(self):
-        background_offset = x_offset, y_offset = -80, -80
+        # background_offset = x_offset, y_offset = -80, -80
 
-        self.map_sprite.map_image.scroll(dx= x_offset, dy= y_offset)
+        # self.map_sprite.map_image.scroll(dx= x_offset, dy= y_offset)
 
         self.screen.blit(self.map_sprite.map_image, (0, 0))
         print(self.background.get_size())
