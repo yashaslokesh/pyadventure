@@ -70,18 +70,36 @@ class Game:
         self.screen.blit(self.map_sprite.map_image, (0, 0))
         print(self.background.get_size())
 
+        self.inventory_active = False
+
         running = True
         while running:
             for event in pygame.event.get():
                 if event.type == QUIT or (event.type == KEYDOWN and event.key == K_q):
                     running = False
+                elif event.type == KEYDOWN:
+                    if event.key == K_i:
+                        self.inventory_active = not self.inventory_active
+                        print('Touched')
+                    else:
+                        print('Juo')
+                        self.player.inventory.update(event)
+
 
             keys = pygame.key.get_pressed()
             # self.screen.fill(BLACK)
 
-            prev_rect = self.player.update(keys)
+            # if keys[K_i]:
+
+            #     print('Touched')
+
+            if not self.inventory_active:
+
+                prev_rect = self.player.update(keys)
             # self.background.update(keys)
-            self.map_sprite.update(keys)
+                self.map_sprite.update(keys)
+
+
 
             if prev_rect is not None:
                 # self.screen.blit(self.background, (prev_rect.x, prev_rect.y), area=prev_rect)
@@ -91,6 +109,9 @@ class Game:
 
             self.map_sprite.draw(self.screen)
             self.player.draw(self.screen)
+
+            if self.inventory_active:
+                self.player.inventory.draw(self.screen)
 
             pygame.display.flip()
 

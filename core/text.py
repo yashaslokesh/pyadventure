@@ -14,7 +14,7 @@ class ScrollingText(object):
     you want to show """
 
     def __init__(
-            self, font, text, color=(255, 255, 255), initial_pos=[50, 400], nl_offset=50
+        self, font, text, color=(255, 255, 255), initial_pos=[50, 400], nl_offset=50
     ):
         """ Form a ScrollingText object
 
@@ -67,14 +67,14 @@ class ScrollingText(object):
                 if char == ">":
                     # Get the int for backspace count from the list of chararacters
                     self.backspace_count = int(
-                        "".join(words[char_index + 2: char_index + 4])
+                        "".join(words[char_index + 2 : char_index + 4])
                     )
                     # Expand the list by the amount to skip so that the iterator's length is extended
                     # This prevents skipping characters after the backspace command
                     # We remove the angle bracket and the numbers entirely from the list here
                     words[char_index:] = ["+"] * self.backspace_count + words[
-                                                                        char_index + 5:
-                                                                        ]
+                        char_index + 5 :
+                    ]
 
                 if self.backspace_count != 0:
                     # If we are still supposed to backspace, then remove the last character

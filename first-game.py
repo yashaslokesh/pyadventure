@@ -129,7 +129,7 @@ while running:
     # If user closes window or presses 'q', end game loop
     for event in pygame.event.get():
         if event.type == pygame.QUIT or (
-                event.type == pygame.KEYDOWN and event.key == pygame.K_q
+            event.type == pygame.KEYDOWN and event.key == pygame.K_q
         ):
             running = False
         elif event.type == SCROLL_TEXT_EVENT:

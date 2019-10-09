@@ -9,3 +9,7 @@ Used the text.ScrollingText class to implement this animation, used a generator 
 ![Gif for walking animation demo](../demo-gifs/04-walking-animation.gif)
 
 Added some functionality to add sprite moving speeds and to change those moving speeds, though the ability to change sprite movement speed for a certain animation might be removed in the future, I can't think of a good enough reason to keep it. Pygame will detect a key being held down and will fire a KEYDOWN event which I use to run the walking animation.
+
+**Notes:**
+- Pygame downloaded using `pipenv`, Python 3.7.4 and 3.6.9 from `pyenv`, doesn't work.
+- Used `miniconda` to install Python 3.7.4 with pygame and Pillow

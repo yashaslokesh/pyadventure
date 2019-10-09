@@ -1,15 +1,17 @@
 """ This module contains all sprite definitions used in the game """
+# external
+import pygame
+from pygame.locals import *
 
+# python stdlib
 import math
 import os
 from enum import Enum
 
-import pygame
-from pygame.locals import *
-
-from .constants import *
-from .images import load_image
-
+# project files
+import core.constants as c
+from core.images import load_image
+from core.inventory import Inventory
 
 # Works if run from the base directory
 
@@ -67,12 +69,17 @@ class Player(pygame.sprite.DirtySprite):
 
         self._active_state = None
 
+        """ TODO: Remove this in the future, only used now because sprites' animations take different sizes """
+        self.max_width = None
+
+        self.inventory = Inventory()
+
     def add_animation(
-            self,
-            anim_state: PlayerStates,
-            anim_seq: list,
-            path: str,
-            move_animation: bool = False,
+        self,
+        anim_state: PlayerStates,
+        anim_seq: list,
+        path: str,
+        move_animation: bool = False,
     ):
         """ 
         Add animations with an identifying "animation_name" tag, along with a sequence of numbers
@@ -95,6 +102,19 @@ class Player(pygame.sprite.DirtySprite):
 
         # Sets active state
         self.set_active_state(anim_state)
+
+        """ TODO: Remove in future when sprite animation sizes are uniform """
+        # self.max_width = max(max(surf.get_width() for surf in ))
+
+        self.max_width = 0
+        for anim_list in self.images.values():
+            for surf in anim_list:
+                w = surf.get_width()
+
+                if w > self.max_width:
+                    self.max_width = w
+
+        # self.max_width = max(surf.get_width for surf in (l for l in self.images.values()))
 
     def set_active_state(self, new_state: PlayerStates):
         """ Pass in the new state, alter the sprite's properties based on the new state.
@@ -138,12 +158,14 @@ class Player(pygame.sprite.DirtySprite):
     )
 
     def _handle_input(self, keys):
+        """ TODO: Replace all occurrences of max_width with just rect.width """
         horiz_speed = 0
         vert_speed = 0
 
         if keys[K_RIGHT]:
             self.set_active_state(PlayerStates.WALK_RIGHT)
-            if self.rect.x + self.rect.width + 5 <= SCREEN_WIDTH:
+            # if self.rect.x + self.rect.width + 5 <= SCREEN_WIDTH:
+            if self.rect.x + self.max_width + 5 <= c.SCREEN_WIDTH:
                 horiz_speed = 5
 
         if keys[K_LEFT]:
@@ -158,7 +180,7 @@ class Player(pygame.sprite.DirtySprite):
 
         if keys[K_DOWN]:
             # if self._active_state in (PlayerStates.WALK_LEFT, PlayerStates.WALK_RIGHT):
-            if self.rect.y + self.rect.height + 5 <= SCREEN_HEIGHT:
+            if self.rect.y + self.rect.height + 5 <= c.SCREEN_HEIGHT:
                 vert_speed = 5
 
         ## TODO: Determine if this is the best way to switch a moving state to a neutral state... maybe make FSM?
@@ -182,7 +204,7 @@ class Player(pygame.sprite.DirtySprite):
 
         ## TODO: Add sprite to LayeredDirty group for easier DirtySprite drawing, in another controller file or game.py
         if (
-                self.active_state in self.move_animations and move_sprite
+            self.active_state in self.move_animations and move_sprite
         ) or self.active_state not in self.move_animations:
             prev_rect = self._update_animation(sprite_speed)
             result = prev_rect

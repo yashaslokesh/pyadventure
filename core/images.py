@@ -9,7 +9,7 @@ from PIL import Image
 
 # Navigates into images/ directory, caller must supply the path to file from here
 # Assumes being called from the base directory
-def load_image(path):
+def load_image(path) -> pygame.Surface:
     image = pygame.image.load(os.path.join("assets", "images", path))
     image = image.convert_alpha()
     return image

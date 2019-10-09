@@ -24,9 +24,15 @@ class MapController(object):
         self.tiles = MapController.setup_tiles()
 
         ## Let config file specify for easy reading
-        self.tiled_size = self.tiled_width, self.tiled_height = len(self.map[0]), len(self.map)
+        self.tiled_size = self.tiled_width, self.tiled_height = (
+            len(self.map[0]),
+            len(self.map),
+        )
 
-        self.full_size = self.full_width, self.full_height = self.tiled_width * const.TILE_WIDTH, self.tiled_height * const.TILE_HEIGHT
+        self.full_size = self.full_width, self.full_height = (
+            self.tiled_width * const.TILE_WIDTH,
+            self.tiled_height * const.TILE_HEIGHT,
+        )
 
         # print(f'Width: {self.width}, Height: {self.height}')
 
@@ -76,13 +82,13 @@ class MapController(object):
             # if self.rect.x >= 0:
             if self.rect.x + self.full_width - 5 >= const.SCREEN_WIDTH:
                 horz_scroll = -5
-        
+
         # Move surface right
         if keys[K_LEFT]:
             # if self.rect.x + self.rect.width <= const.SCREEN_WIDTH:
             if self.rect.x + 5 <= 0:
                 horz_scroll = 5
-        
+
         # Move down
         if keys[K_UP]:
             # if self.rect.y + self.rect.height <= const.SCREEN_WIDTH:
@@ -101,8 +107,3 @@ class MapController(object):
         move_speed = self._handle_input(keys)
 
         self.rect = self.rect.move(move_speed)
-
-
-
-
-
