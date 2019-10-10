@@ -1,4 +1,5 @@
 import os
+os.environ['SDL_VIDEO_WINDOW_POS'] = '0,0'
 
 import core.constants as const
 import pygame

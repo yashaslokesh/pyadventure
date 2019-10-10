@@ -238,3 +238,11 @@ class Player(pygame.sprite.DirtySprite):
         self.rect = self.rect.move(sprite_speed)
 
         return prev_rect
+
+
+class Enemy(pygame.sprite.DirtySprite):
+    """ This class controls enemies
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
