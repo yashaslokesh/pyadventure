@@ -1,5 +1,6 @@
 import os
-os.environ['SDL_VIDEO_WINDOW_POS'] = '0,0'
+
+os.environ["SDL_VIDEO_WINDOW_POS"] = "0,0"
 
 import core.constants as const
 import pygame
@@ -8,6 +9,10 @@ from core.sprites import Player, PlayerStates
 from pygame.locals import *
 
 BLACK = 0, 0, 0
+
+
+def setup_npc():
+    pass
 
 
 class Game:
@@ -44,7 +49,10 @@ class Game:
                 PlayerStates.WALK_LEFT, walk_left, walk_left_dir, move_animation=True
             )
 
-            ka.set_active_state(PlayerStates.TALKING)
+            ## TODO: Add custom jump anim
+            ka.add_animation(PlayerStates.JUMPING, talking_seq, talk_dir)
+
+            ka.set_active_state(PlayerStates.JUMPING)
 
             return ka
 
@@ -81,11 +89,8 @@ class Game:
                 elif event.type == KEYDOWN:
                     if event.key == K_i:
                         self.inventory_active = not self.inventory_active
-                        print('Touched')
                     else:
-                        print('Juo')
                         self.player.inventory.update(event)
-
 
             keys = pygame.key.get_pressed()
             # self.screen.fill(BLACK)
@@ -97,10 +102,8 @@ class Game:
             if not self.inventory_active:
 
                 prev_rect = self.player.update(keys)
-            # self.background.update(keys)
+                # self.background.update(keys)
                 self.map_sprite.update(keys)
-
-
 
             if prev_rect is not None:
                 # self.screen.blit(self.background, (prev_rect.x, prev_rect.y), area=prev_rect)

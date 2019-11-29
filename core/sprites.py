@@ -6,7 +6,7 @@ from pygame.locals import *
 # python stdlib
 import math
 import os
-from enum import Enum
+from enum import Enum, auto
 
 # project files
 import core.constants as c
@@ -22,10 +22,11 @@ from core.inventory import Inventory
 
 
 class PlayerStates(Enum):
-    STANDING = 1
-    WALK_LEFT = 2
-    WALK_RIGHT = 3
-    TALKING = 4
+    STANDING = auto()
+    WALK_LEFT = auto()
+    WALK_RIGHT = auto()
+    TALKING = auto()
+    JUMPING = auto()
 
 
 ##
@@ -44,7 +45,7 @@ class Player(pygame.sprite.DirtySprite):
     """
 
     def __init__(self, start_x, start_y):
-        pygame.sprite.DirtySprite.__init__(self)
+        super().__init__()
 
         """ 
         Initializes all dictionaries used for storing various animation values, all dictionaries have animation names
@@ -58,6 +59,7 @@ class Player(pygame.sprite.DirtySprite):
         """
         self.animations = {}
         self.images = {}
+        self.mass = 50
 
         self.START_LOCATION = start_x, start_y
 
@@ -66,6 +68,8 @@ class Player(pygame.sprite.DirtySprite):
         self.move_animations = set()
 
         self.rect = None
+
+        self.y_momentum = 0
 
         self._active_state = None
 
@@ -121,6 +125,8 @@ class Player(pygame.sprite.DirtySprite):
         The active state is automatically set to the most recent state for which an animation was added
         using add_animation(). This method takes care of changing animations
         """
+        if new_state == PlayerStates.JUMPING:
+            self.y_momentum = c.JUMP_SPEED
 
         changed_state = self._active_state != new_state
 
@@ -158,34 +164,87 @@ class Player(pygame.sprite.DirtySprite):
     )
 
     def _handle_input(self, keys):
-        """ TODO: Replace all occurrences of max_width with just rect.width """
+        """ TODO: Replace all occurrences of max_width with just rect.width 
+        Requires fixing some animations first.
+        """
         horiz_speed = 0
         vert_speed = 0
 
-        if keys[K_RIGHT]:
-            self.set_active_state(PlayerStates.WALK_RIGHT)
-            # if self.rect.x + self.rect.width + 5 <= SCREEN_WIDTH:
-            if self.rect.x + self.max_width + 5 <= c.SCREEN_WIDTH:
-                horiz_speed = 5
+        """
+        Consulted this PEP document... switch statements were not added to python
+        https://www.python.org/dev/peps/pep-3103/#if-elif-chain-vs-dict-based-dispatch
+        So dictionary dispatch is used instead.
+        """
 
-        if keys[K_LEFT]:
-            self.set_active_state(PlayerStates.WALK_LEFT)
-            if self.rect.x - 5 >= 0:
-                horiz_speed = -5
+        def case_standing():
+            pass
 
-        if keys[K_UP]:
-            # if self._active_state in (PlayerStates.WALK_LEFT, PlayerStates.WALK_RIGHT):
-            if self.rect.y - 5 >= 0:
-                vert_speed = -5
+        def case_walk_left():
+            nonlocal horiz_speed
+            if keys[K_UP]:
+                self.y_momentum = c.JUMP_SPEED
+                self.set_active_state(PlayerStates.JUMPING)
+            elif keys[K_RIGHT]:
+                self.set_active_state(PlayerStates.WALK_RIGHT)
+                if self.rect.right + 5 <= c.SCREEN_WIDTH:
+                    horiz_speed = 5
+            elif keys[K_LEFT]:
+                if self.rect.left - 5 >= 0:
+                    horiz_speed = -5
 
-        if keys[K_DOWN]:
-            # if self._active_state in (PlayerStates.WALK_LEFT, PlayerStates.WALK_RIGHT):
-            if self.rect.y + self.rect.height + 5 <= c.SCREEN_HEIGHT:
-                vert_speed = 5
+        def case_walk_right():
+            nonlocal horiz_speed
+            if keys[K_UP]:
+                self.y_momentum = c.JUMP_SPEED
+                self.set_active_state(PlayerStates.JUMPING)
+            elif keys[K_LEFT]:
+                self.set_active_state(PlayerStates.WALK_LEFT)
+                if self.rect.left - 5 >= 0:
+                    horiz_speed = -5
+            elif keys[K_RIGHT]:
+                if self.rect.right + 5 <= c.SCREEN_WIDTH:
+                    horiz_speed = 5
 
-        ## TODO: Determine if this is the best way to switch a moving state to a neutral state... maybe make FSM?
-        if all(i == 0 for i in (horiz_speed, vert_speed)):
-            self.set_active_state(PlayerStates.TALKING)
+        def case_talking():
+            nonlocal horiz_speed
+            if keys[K_UP]:
+                self.set_active_state(PlayerStates.JUMPING)
+                self.y_momentum = c.JUMP_SPEED
+            elif keys[K_RIGHT]:
+                self.set_active_state(PlayerStates.WALK_RIGHT)
+                if self.rect.right + 5 <= c.SCREEN_WIDTH:
+                    horiz_speed = 5
+            elif keys[K_LEFT]:
+                self.set_active_state(PlayerStates.WALK_LEFT)
+                if self.rect.left - 5 >= 0:
+                    horiz_speed = -5
+
+        def case_jump():
+            nonlocal vert_speed, horiz_speed
+            if self.rect.bottom + self.y_momentum < c.SCREEN_HEIGHT:
+                self.y_momentum += c.GRAVITY
+                vert_speed = self.y_momentum
+            else:
+                self.y_momentum = 0
+                self.set_active_state(PlayerStates.TALKING)
+
+            if keys[K_LEFT]:
+                if self.rect.left - 5 >= 0:
+                    horiz_speed = -5
+            elif keys[K_RIGHT]:
+                if self.rect.right + 5 <= c.SCREEN_WIDTH:
+                    horiz_speed = 5
+
+        switcher_dict = {
+            PlayerStates.STANDING: case_standing,
+            PlayerStates.WALK_LEFT: case_walk_left,
+            PlayerStates.WALK_RIGHT: case_walk_right,
+            PlayerStates.TALKING: case_talking,
+            PlayerStates.JUMPING: case_jump,
+        }
+
+        handler = switcher_dict[self.active_state]
+        handler()
 
         return [horiz_speed, vert_speed]
 
@@ -240,9 +299,21 @@ class Player(pygame.sprite.DirtySprite):
         return prev_rect
 
 
-class Enemy(pygame.sprite.DirtySprite):
-    """ This class controls enemies
+class NPC(pygame.sprite.DirtySprite):
+    """ This class can be subclassed to make any non-player character
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, start_x, start_y):
+        super().__init__(self)
+
+        self.animations = {}
+        self.images = {}
+
+        self.START_LOCATION = start_x, start_y
+
+        self.animation_speed = 0.10
+
+        self.rect = None
+
+    def add_animation(self, anim_seq: list, path: str):
+        pass

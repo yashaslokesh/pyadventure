@@ -58,15 +58,15 @@ class Inventory(object):
         elif keydown_event.key == K_UP:
             self.active_item[1] += -1
             if self.active_item[1] == -1:
-                self.active_item[1] = 3            
+                self.active_item[1] = 3
         elif keydown_event.key == K_LEFT:
             self.active_item[0] -= 1
             if self.active_item[0] == -1:
-                self.active_item[0] = 3                        
+                self.active_item[0] = 3
         elif keydown_event.key == K_RIGHT:
             self.active_item[0] += 1
             if self.active_item[0] == 4:
-                self.active_item[0] = 0            
+                self.active_item[0] = 0
 
     def draw(self, screen: pygame.Surface):
         # TODO: Add actual sprite here
@@ -87,12 +87,19 @@ class Inventory(object):
 
         selection_box = self.rect.copy()
         selection_box.size = 150, 150
-        selection_box.x += (self.active_item[0] * 150) + (c.SELECTION_BOX_THICKNESS // 2)
-        selection_box.y += (self.active_item[1] * 150) + (c.SELECTION_BOX_THICKNESS // 2)
+        selection_box.x += (self.active_item[0] * 150) + (
+            c.SELECTION_BOX_THICKNESS // 2
+        )
+        selection_box.y += (self.active_item[1] * 150) + (
+            c.SELECTION_BOX_THICKNESS // 2
+        )
         selection_box.width -= c.SELECTION_BOX_THICKNESS
         selection_box.height -= c.SELECTION_BOX_THICKNESS
 
-        pygame.draw.rect(screen, (255, 255, 255), selection_box, c.SELECTION_BOX_THICKNESS)
+        pygame.draw.rect(
+            screen, (255, 255, 255), selection_box, c.SELECTION_BOX_THICKNESS
+        )
+
 
 if __name__ == "__main__":
     i = Item(4)
