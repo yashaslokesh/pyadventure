@@ -1,14 +1,11 @@
 import os
-
-os.environ["SDL_VIDEO_WINDOW_POS"] = "0,0"
-
 import core.constants as const
 import pygame
 from core.maps import MapController
 from core.sprites import Player, PlayerStates
 from pygame.locals import *
 
-BLACK = 0, 0, 0
+os.environ["SDL_VIDEO_WINDOW_POS"] = "0,0"
 
 
 def setup_npc():
@@ -34,6 +31,8 @@ class Game:
             pygame.Rect(0,                  const.SCREEN_HEIGHT, const.SCREEN_WIDTH, 50),                   # bottom
             pygame.Rect(const.SCREEN_WIDTH, 0,                   50,                 const.SCREEN_HEIGHT),  # right
             pygame.Rect(0,                  -50,                 const.SCREEN_WIDTH, 50),                   # top
+
+            pygame.Rect(0, 400, 400, 50)
         ]
 
     ## Static for now, as we only return the player and don't change the class state
@@ -115,9 +114,9 @@ class Game:
             self.player.draw(self.screen)
 
             for bound in self.screen_boundaries:
-                pygame.draw.rect(self.screen, (255, 255, 255), bound)
+                pygame.draw.rect(self.screen, const.WHITE, bound)
 
-            pygame.draw.rect(self.screen, (0, 0, 255), pygame.Rect(self.player.rect.left, self.player.rect.top, 100, 100))
+            pygame.draw.rect(self.screen, const.BLUE, pygame.Rect(self.player.rect.left, self.player.rect.top, 100, 100))
 
             if self.inventory_active:
                 self.player.inventory.draw(self.screen)

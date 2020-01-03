@@ -170,7 +170,7 @@ class Player:
 
         If the animation is supposed to be updated, it will be. Otherwise, nothing happens to the sprite's current
         image and rect and animation frame, and we draw the sprite again. """
-        sprite_speed = self._handle_input(keys)
+        sprite_speed = self._handle_input(keys, obstacles)
         move_sprite = any(speed != 0 for speed in sprite_speed)
 
         result = None
@@ -182,19 +182,12 @@ class Player:
             prev_rect = self._update_animation()
             result = prev_rect
 
-        collisions = self.body.move(*sprite_speed, obstacles)
-
-        if self.active_state == PlayerStates.JUMPING and collisions['bottom']: # Player was in the air but has landed on a surface
-            self._set_active_state(PlayerStates.TALKING)
-
         return result
 
-    def _handle_input(self, keys) -> tuple:
+    def _handle_input(self, keys, obstacles) -> tuple:
         """ TODO: Replace all occurrences of max_width with just rect.width 
         Requires fixing some animations first.
         """
-        # TODO: possibly use `self.body.move()` in this method and handle state changes only here.
-        #  cleanup the `update()` method above so state changes are requested here.
         horiz_speed = 0
         vert_speed = 0
 
@@ -244,8 +237,10 @@ class Player:
         def case_jump():
             nonlocal vert_speed, horiz_speed
 
-            self.y_momentum += c.GRAVITY
-            vert_speed = self.y_momentum
+            # TODO: Remove the y-momentum setting here.
+            # Moved to the end of the method so that gravity is always being applied
+            # self.y_momentum += c.GRAVITY
+            # vert_speed += self.y_momentum
             if self.rect.bottom + self.y_momentum >= c.SCREEN_HEIGHT:
                 self._set_active_state(PlayerStates.TALKING)
                 self.y_momentum = 0
@@ -265,6 +260,22 @@ class Player:
 
         handler = switcher_dict[self.active_state]
         handler()
+
+        self.y_momentum += c.GRAVITY
+        vert_speed += self.y_momentum
+
+        # Terminal Velocity
+        if vert_speed > 10:
+            vert_speed = 10
+
+        # Handle after-collision processing here.
+
+        collisions = self.body.move(horiz_speed, vert_speed, obstacles)
+
+        if self.active_state == PlayerStates.JUMPING and collisions['bottom']:  # Player was in the air but has landed on a surface
+            self._set_active_state(PlayerStates.TALKING)
+
+        print(vert_speed)
 
         return horiz_speed, vert_speed
 
