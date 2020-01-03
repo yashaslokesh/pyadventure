@@ -10,7 +10,7 @@ from enum import Enum, auto
 from typing import Sequence
 
 # project files
-import core.constants as c
+import core.constants as const
 from core.images import load_image
 from core.inventory import Inventory
 import core.physics as physics
@@ -148,7 +148,8 @@ class Player:
         using add_animation(). This method takes care of changing animations
         """
         if new_state == PlayerStates.JUMPING:
-            self.y_momentum = c.JUMP_SPEED
+            # self.y_momentum = const.JUMP_SPEED
+            self.y_momentum = -1300
 
         changed_state = self._active_state != new_state
 
@@ -163,14 +164,14 @@ class Player:
 
     # TODO: Currently returns Rect so Game class can draw background over previous position, but there might be a
     #  better way
-    def update(self, keys, obstacles):
+    def update(self, keys, obstacles, time_delta):
         """
         Move_sprite will be true if the speed has some non-zero value. Granted, it is only ever a two-element list,
         but using the any() function makes it clean to read.
 
         If the animation is supposed to be updated, it will be. Otherwise, nothing happens to the sprite's current
         image and rect and animation frame, and we draw the sprite again. """
-        sprite_speed = self._handle_input(keys, obstacles)
+        sprite_speed = self._handle_input(keys, obstacles, time_delta)
         move_sprite = any(speed != 0 for speed in sprite_speed)
 
         result = None
@@ -184,7 +185,7 @@ class Player:
 
         return result
 
-    def _handle_input(self, keys, obstacles) -> tuple:
+    def _handle_input(self, keys, obstacles, time_delta) -> tuple:
         """ TODO: Replace all occurrences of max_width with just rect.width 
         Requires fixing some animations first.
         """
@@ -203,52 +204,41 @@ class Player:
         def case_walk_left():
             nonlocal horiz_speed
             if keys[K_UP]:
-                self.y_momentum = c.JUMP_SPEED
                 self._set_active_state(PlayerStates.JUMPING)
             elif keys[K_RIGHT]:
                 self._set_active_state(PlayerStates.WALK_RIGHT)
-                horiz_speed = 5
+                horiz_speed = const.WALKING_SPEED
             elif keys[K_LEFT]:
-                horiz_speed = -5
+                horiz_speed = -const.WALKING_SPEED
 
         def case_walk_right():
             nonlocal horiz_speed
             if keys[K_UP]:
-                self.y_momentum = c.JUMP_SPEED
                 self._set_active_state(PlayerStates.JUMPING)
             elif keys[K_LEFT]:
                 self._set_active_state(PlayerStates.WALK_LEFT)
-                horiz_speed = -5
+                horiz_speed = -const.WALKING_SPEED
             elif keys[K_RIGHT]:
-                horiz_speed = 5
+                horiz_speed = const.WALKING_SPEED
 
         def case_talking():
             nonlocal horiz_speed
             if keys[K_UP]:
                 self._set_active_state(PlayerStates.JUMPING)
-                self.y_momentum = c.JUMP_SPEED
             elif keys[K_RIGHT]:
                 self._set_active_state(PlayerStates.WALK_RIGHT)
-                horiz_speed = 5
+                horiz_speed = const.WALKING_SPEED
             elif keys[K_LEFT]:
                 self._set_active_state(PlayerStates.WALK_LEFT)
-                horiz_speed = -5
+                horiz_speed = -const.WALKING_SPEED
 
         def case_jump():
             nonlocal vert_speed, horiz_speed
 
-            # TODO: Remove the y-momentum setting here.
-            # Moved to the end of the method so that gravity is always being applied
-            # self.y_momentum += c.GRAVITY
-            # vert_speed += self.y_momentum
-            if self.rect.bottom + self.y_momentum >= c.SCREEN_HEIGHT:
-                self._set_active_state(PlayerStates.TALKING)
-                self.y_momentum = 0
-
             if keys[K_LEFT]:
-                horiz_speed = -5
+                horiz_speed = -const.WALKING_SPEED
             elif keys[K_RIGHT]:
-                horiz_speed = 5
+                horiz_speed = const.WALKING_SPEED
 
         switcher_dict = {
             PlayerStates.STANDING: case_standing,
@@ -261,23 +251,24 @@ class Player:
         handler = switcher_dict[self.active_state]
         handler()
 
-        self.y_momentum += c.GRAVITY
+        self.y_momentum += const.GRAVITY
         vert_speed += self.y_momentum
 
-        # Terminal Velocity
-        if vert_speed > 10:
-            vert_speed = 10
+        if vert_speed > const.TERMINAL_VEL:
+            vert_speed = const.TERMINAL_VEL
 
         # Handle after-collision processing here.
+
+        horiz_speed *= time_delta / 1000
+        vert_speed *= time_delta / 1000
 
         collisions = self.body.move(horiz_speed, vert_speed, obstacles)
 
         if self.active_state == PlayerStates.JUMPING and collisions['bottom']:  # Player was in the air but has landed on a surface
             self._set_active_state(PlayerStates.TALKING)
+            self.y_momentum = 0
 
-        print(vert_speed)
-
-        return horiz_speed, vert_speed
+        return horiz_speed * time_delta, vert_speed * time_delta
 
     def _update_animation(self) -> pygame.Rect:
         """

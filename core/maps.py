@@ -1,10 +1,11 @@
+import pygame
+from pygame.locals import *
+
 from configparser import ConfigParser
 from enum import Enum
 
 import core.constants as const
-import pygame
-
-from pygame.locals import *
+import core.setup as setup
 
 
 class MapTileType(Enum):
@@ -20,10 +21,9 @@ class MapController(object):
         config.read(filename)
         self.map = config.get("world", "map").split("\n")
 
-        ##
-        self.tiles = MapController.setup_tiles()
+        self.tiles = setup.setup_tiles()
 
-        ## Let config file specify for easy reading
+        # Let config file specify for easy reading
         self.tiled_size = self.tiled_width, self.tiled_height = (
             len(self.map[0]),
             len(self.map),
@@ -36,27 +36,16 @@ class MapController(object):
 
         # print(f'Width: {self.width}, Height: {self.height}')
 
-        ## Parse through symbol specs
+        # Parse through symbol specs
         for section in config.sections():
-            ## If length of the name of the section is 1, it's a tile
+            # If length of the name of the section is 1, it's a tile
             if len(section) == 1:
                 tile_specs = dict(config.items(section))
 
                 tile_type = MapTileType(section)
                 self.key[tile_type] = tile_specs
 
-    @staticmethod
-    def setup_tiles():
-        red_tile = pygame.Surface((const.TILE_WIDTH, const.TILE_HEIGHT))
-        green_tile = pygame.Surface((const.TILE_WIDTH, const.TILE_HEIGHT))
-
-        red_tile.fill(pygame.Color(255, 0, 0))
-        green_tile.fill(pygame.Color(0, 255, 0))
-
-        tiles = {MapTileType.wall: red_tile, MapTileType.floor: green_tile}
-        return tiles
-
-    def render(self) -> pygame.Surface:
+    def render(self) -> None:
         map_image = pygame.Surface(self.full_size)
 
         for y, line in enumerate(self.map):
@@ -65,45 +54,46 @@ class MapController(object):
                 tile_surf = self.tiles[tile_type]
                 map_image.blit(tile_surf, (x * const.TILE_WIDTH, y * const.TILE_HEIGHT))
 
-        ## Returns the configured background image
+        # Returns the configured background image
         self.map_image = map_image
         self.rect = self.map_image.get_rect()
-        return map_image
 
-    def draw(self, screen: pygame.Surface):
-        screen.blit(self.map_image, self.rect)
+    def update(self, keys, time_delta):
+        move_speed = self._handle_input(keys, time_delta)
 
-    def _handle_input(self, keys):
+        self.rect = self.rect.move(move_speed)
+
+    def _handle_input(self, keys, time_delta):
         horz_scroll = 0
         vert_scroll = 0
+
+        scroll_mag = const.WALKING_SPEED * time_delta / 1000
 
         # Move this map left to make it appear as if player is moving right
         if keys[K_RIGHT]:
             # if self.rect.x >= 0:
-            if self.rect.x + self.full_width - 5 >= const.SCREEN_WIDTH:
-                horz_scroll = -5
+            if self.rect.x + self.full_width - scroll_mag >= const.SCREEN_WIDTH:
+                horz_scroll = -scroll_mag
 
         # Move surface right
         if keys[K_LEFT]:
             # if self.rect.x + self.rect.width <= const.SCREEN_WIDTH:
-            if self.rect.x + 5 <= 0:
-                horz_scroll = 5
+            if self.rect.x + scroll_mag <= 0:
+                horz_scroll = scroll_mag
 
         # Move down
         if keys[K_UP]:
             # if self.rect.y + self.rect.height <= const.SCREEN_WIDTH:
-            if self.rect.y + 5 <= 0:
-                vert_scroll = 5
+            if self.rect.y + scroll_mag <= 0:
+                vert_scroll = scroll_mag
 
         # Move up
         if keys[K_DOWN]:
             # if self.rect.y >= 0:
-            if self.rect.y + self.full_height - 5 >= const.SCREEN_HEIGHT:
-                vert_scroll = -5
+            if self.rect.y + self.full_height - scroll_mag >= const.SCREEN_HEIGHT:
+                vert_scroll = -scroll_mag
 
-        return [horz_scroll, vert_scroll]
+        return horz_scroll, vert_scroll
 
-    def update(self, keys):
-        move_speed = self._handle_input(keys)
-
-        self.rect = self.rect.move(move_speed)
+    def draw(self, screen: pygame.Surface):
+        screen.blit(self.map_image, self.rect)
