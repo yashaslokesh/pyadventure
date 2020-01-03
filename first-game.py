@@ -49,7 +49,7 @@ BALL_DEFAULT = [0]
 ## Directories for animation images ----------------------------
 # Main sprite's animation directories
 KA_BASE_DIR = "ka"
-KA_TALK_DIR = os.path.join(KA_BASE_DIR, "300")
+KA_TALK_DIR = os.path.join(KA_BASE_DIR, "talking")
 KA_WALK_RIGHT_DIR = os.path.join(KA_BASE_DIR, "walk_right")
 KA_WALK_LEFT_DIR = os.path.join(KA_BASE_DIR, "walk_left")
 
