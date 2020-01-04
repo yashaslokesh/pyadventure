@@ -2,9 +2,9 @@ import pygame
 
 import os
 
-import core.sprites as sprites
-import core.maps as maps
-import core.constants as const
+from . import sprites
+from . import maps
+from . import constants as const
 
 os.environ["SDL_VIDEO_WINDOW_POS"] = "0,0"
 
@@ -19,7 +19,7 @@ def setup_player():
     walk_right_dir = os.path.join(images_dir, "walk_right")
     walk_left_dir = os.path.join(images_dir, "walk_left")
 
-    ka = sprites.Player()
+    ka = sprites.Player(scale=const.SCALE)
     ka.add_animation(sprites.PlayerStates.TALKING, talking_seq, talk_dir)
     ka.add_animation(
         sprites.PlayerStates.WALK_RIGHT, walk_right, walk_right_dir, move_animation=True
@@ -43,20 +43,25 @@ def setup_tiles():
     red_tile.fill(pygame.Color(255, 0, 0))
     green_tile.fill(pygame.Color(0, 255, 0))
 
-    tiles = {maps.MapTileType.wall: red_tile, maps.MapTileType.floor: green_tile}
+    tiles = {maps.MapTile.WALL: red_tile, maps.MapTile.FLOOR: green_tile}
     return tiles
 
 
-def setup_maps() -> maps.MapController:
+def setup_maps():
     """ TODO: Only returns one map currently, might have to return dict with enum keys or an ordered map list in the
          future """
 
-    def setup_map_1() -> maps.MapController:
+    def setup_map_1():
         map_1_path = os.path.join("maps", "world_1.map")
         map_1_controller = maps.MapController(map_1_path)
-        map_1_controller.render()
 
         return map_1_controller
 
-    return setup_map_1()
+    def setup_map_2():
+        map_2_path = os.path.join("maps", "world_2.map")
+        map_2_controller = maps.MapController(map_2_path)
+
+        return map_2_controller
+
+    return {1: setup_map_1(), 2: setup_map_2()}
 

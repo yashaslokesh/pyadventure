@@ -10,10 +10,10 @@ from enum import Enum, auto
 from typing import Sequence
 
 # project files
-import core.constants as const
-from core.images import load_image
-from core.inventory import Inventory
-import core.physics as physics
+from . import constants as const
+from .images import load_image
+from .inventory import Inventory
+from . import physics
 
 class PlayerStates(Enum):
     STANDING = auto()
@@ -38,7 +38,7 @@ class Player:
     self.anim_frame_changed_speed is set to 0.08, cannot be changed at runtime.
     """
 
-    def __init__(self, x=300, y=300):
+    def __init__(self, x=300, y=300, scale=1.):
         """ 
         Initializes all dictionaries used for storing various animation values, all dictionaries have animation names
         as their keys.
@@ -53,9 +53,7 @@ class Player:
         self.images = {}
         self._active_state = None
         self.animation_speed = 0.10
-
-        self.mass = 50
-        self.y_momentum = 0
+        self.scale = scale
 
         self.start_loc = x, y
 
@@ -63,6 +61,8 @@ class Player:
 
         self.inventory = Inventory()
         self.body = physics.PhysicsBody(*self.start_loc, 0, 0)
+        self.mass = 50
+        self.y_momentum = 0
         self.rect = self.body.rect
 
         self.added_anim = False
@@ -93,6 +93,8 @@ class Player:
 
         for frame in animation_image_frames:
             image = load_image(os.path.join(path, f"{frame}.png"))
+            scaled_image_size = list(map(lambda x: int(x * self.scale), image.get_size()))
+            image = pygame.transform.scale(image, scaled_image_size)
             (self.images[anim_state]).append(image)
 
         # Sets active state
@@ -148,8 +150,7 @@ class Player:
         using add_animation(). This method takes care of changing animations
         """
         if new_state == PlayerStates.JUMPING:
-            # self.y_momentum = const.JUMP_SPEED
-            self.y_momentum = -1300
+            self.y_momentum = const.JUMP_SPEED
 
         changed_state = self._active_state != new_state
 

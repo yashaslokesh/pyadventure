@@ -4,7 +4,7 @@ from pygame.locals import *
 
 from random import randint
 
-import core.constants as c
+from . import constants as const
 
 
 class Item(object):
@@ -31,7 +31,7 @@ class Inventory(object):
         self.active_item = [0, 0]
 
         self.rect = pygame.Rect(
-            c.INVENTORY_X, c.INVENTORY_Y, c.INVENTORY_WIDTH, c.INVENTORY_HEIGHT
+            const.INVENTORY_X, const.INVENTORY_Y, const.INVENTORY_WIDTH, const.INVENTORY_HEIGHT
         )
 
         self.sample_item_colors = []
@@ -88,16 +88,16 @@ class Inventory(object):
         selection_box = self.rect.copy()
         selection_box.size = 150, 150
         selection_box.x += (self.active_item[0] * 150) + (
-            c.SELECTION_BOX_THICKNESS // 2
+                const.SELECTION_BOX_THICKNESS // 2
         )
         selection_box.y += (self.active_item[1] * 150) + (
-            c.SELECTION_BOX_THICKNESS // 2
+                const.SELECTION_BOX_THICKNESS // 2
         )
-        selection_box.width -= c.SELECTION_BOX_THICKNESS
-        selection_box.height -= c.SELECTION_BOX_THICKNESS
+        selection_box.width -= const.SELECTION_BOX_THICKNESS
+        selection_box.height -= const.SELECTION_BOX_THICKNESS
 
         pygame.draw.rect(
-            screen, (255, 255, 255), selection_box, c.SELECTION_BOX_THICKNESS
+            screen, (255, 255, 255), selection_box, const.SELECTION_BOX_THICKNESS
         )
 
 

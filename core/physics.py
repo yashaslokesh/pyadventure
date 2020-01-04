@@ -31,6 +31,4 @@ class PhysicsBody:
                 self.rect.top = obj.bottom
                 collisions["top"] = True
 
-        # print(collisions)
-
         return collisions

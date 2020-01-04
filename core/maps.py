@@ -1,58 +1,53 @@
 import pygame
 from pygame.locals import *
 
-from configparser import ConfigParser
-from enum import Enum
+from enum import Enum, auto
 
-import core.constants as const
-import core.setup as setup
+from . import constants as const
+from . import setup
 
 
-class MapTileType(Enum):
-    wall = "#"
-    floor = "_"
+class MapTile(Enum):
+    FLOOR = auto()
+    WALL = auto()
+
+    @staticmethod
+    def get_tile_from_string(tile_repr):
+        if tile_repr == '_':
+            return MapTile.FLOOR
+        elif tile_repr == '#':
+            return MapTile.WALL
 
 
 class MapController(object):
     def __init__(self, filename):
-        self.key = {}
+        with open(filename) as f:
+            map_config = f.readlines()
+            map_config = list(map(lambda s: s.strip(), map_config))
 
-        config = ConfigParser(comment_prefixes=";")
-        config.read(filename)
-        self.map = config.get("world", "map").split("\n")
+        print(filename)
+        self.map = map_config
 
         self.tiles = setup.setup_tiles()
+        self.obstacles = []
 
-        # Let config file specify for easy reading
-        self.tiled_size = self.tiled_width, self.tiled_height = (
-            len(self.map[0]),
-            len(self.map),
-        )
+        self.tiling_size = self.tiled_width, self.tiled_height = len(self.map[0]), len(self.map)
+        self.true_size = self.true_width, self.true_height = self.tiled_width * const.TILE_WIDTH, self.tiled_height * const.TILE_HEIGHT
 
-        self.full_size = self.full_width, self.full_height = (
-            self.tiled_width * const.TILE_WIDTH,
-            self.tiled_height * const.TILE_HEIGHT,
-        )
+        # Always renders automatically, when created.
+        self._render()
 
-        # print(f'Width: {self.width}, Height: {self.height}')
-
-        # Parse through symbol specs
-        for section in config.sections():
-            # If length of the name of the section is 1, it's a tile
-            if len(section) == 1:
-                tile_specs = dict(config.items(section))
-
-                tile_type = MapTileType(section)
-                self.key[tile_type] = tile_specs
-
-    def render(self) -> None:
-        map_image = pygame.Surface(self.full_size)
+    def _render(self):
+        map_image = pygame.Surface(self.true_size)
 
         for y, line in enumerate(self.map):
             for x, sym in enumerate(line):
-                tile_type = MapTileType(sym)
-                tile_surf = self.tiles[tile_type]
-                map_image.blit(tile_surf, (x * const.TILE_WIDTH, y * const.TILE_HEIGHT))
+                tile = MapTile.get_tile_from_string(sym)
+                tile_surf = self.tiles[tile]
+                obs = map_image.blit(tile_surf, (x * const.TILE_WIDTH, y * const.TILE_HEIGHT))
+                if tile == MapTile.WALL:
+                    self.obstacles.append(obs)
+                    print(obs)
 
         # Returns the configured background image
         self.map_image = map_image
@@ -60,6 +55,8 @@ class MapController(object):
 
     def update(self, keys, time_delta):
         move_speed = self._handle_input(keys, time_delta)
+
+        self.obstacles = list(map(lambda r: r.move(move_speed), self.obstacles))
 
         self.rect = self.rect.move(move_speed)
 
@@ -72,7 +69,7 @@ class MapController(object):
         # Move this map left to make it appear as if player is moving right
         if keys[K_RIGHT]:
             # if self.rect.x >= 0:
-            if self.rect.x + self.full_width - scroll_mag >= const.SCREEN_WIDTH:
+            if self.rect.x + self.true_width - scroll_mag >= const.SCREEN_WIDTH:
                 horz_scroll = -scroll_mag
 
         # Move surface right
@@ -90,7 +87,7 @@ class MapController(object):
         # Move up
         if keys[K_DOWN]:
             # if self.rect.y >= 0:
-            if self.rect.y + self.full_height - scroll_mag >= const.SCREEN_HEIGHT:
+            if self.rect.y + self.true_height - scroll_mag >= const.SCREEN_HEIGHT:
                 vert_scroll = -scroll_mag
 
         return horz_scroll, vert_scroll

@@ -1,10 +1,9 @@
 """ This is a utility file for image processing before being used in a game 
 """
-
-import os
-
 import pygame
 from PIL import Image
+
+import os
 
 
 # Navigates into images/ directory, caller must supply the path to file from here
