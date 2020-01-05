@@ -9,7 +9,9 @@ SCREEN_SIZE = SCREEN_WIDTH, SCREEN_HEIGHT = 800, 800
 
 # Independent from screen size, determines
 # how big the map will be
-TILE_SIZE = TILE_WIDTH, TILE_HEIGHT = 40, 40
+TILE_LENGTH = 40
+TILE_SIZE = TILE_WIDTH, TILE_HEIGHT = TILE_LENGTH, TILE_LENGTH # Quick fix to enforce a square while not breaking existing game...
+# TODO: Remove redundant TILE_* identifiers above... requires changing code in other files also.
 
 INVENTORY_SIZE = INVENTORY_WIDTH, INVENTORY_HEIGHT = (
     600,

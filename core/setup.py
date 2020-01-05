@@ -6,7 +6,7 @@ from . import sprites
 from . import maps
 from . import constants as const
 
-os.environ["SDL_VIDEO_WINDOW_POS"] = "0,0"
+os.environ["SDL_VIDEO_WINDOW_POS"] = "600,0"
 
 
 def setup_player():
@@ -31,7 +31,10 @@ def setup_player():
     # TODO: Add custom jump anim
     ka.add_animation(sprites.PlayerStates.JUMPING, talking_seq, talk_dir)
 
-    ka.active_state = sprites.PlayerStates.WALK_RIGHT
+    # TODO: Add custom falling anim
+    ka.add_animation(sprites.PlayerStates.FALLING, talking_seq, talk_dir)
+
+    ka.active_state = sprites.PlayerStates.FALLING
 
     return ka
 

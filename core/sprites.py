@@ -1,6 +1,7 @@
 """ This module contains all sprite definitions used in the game """
 # external
 import pygame
+import pygame.math
 from pygame.locals import *
 
 # python stdlib
@@ -15,15 +16,16 @@ from .images import load_image
 from .inventory import Inventory
 from . import physics
 
+
 class PlayerStates(Enum):
     STANDING = auto()
     WALK_LEFT = auto()
     WALK_RIGHT = auto()
     TALKING = auto()
     JUMPING = auto()
+    FALLING = auto()
 
 
-##
 class Player:
     """ This class will control the player sprite.
     
@@ -63,7 +65,7 @@ class Player:
         self.body = physics.PhysicsBody(*self.start_loc, 0, 0)
         self.mass = 50
         self.y_momentum = 0
-        self.rect = self.body.rect
+        # self.rect = self.body.rect
 
         self.added_anim = False
 
@@ -98,7 +100,7 @@ class Player:
             (self.images[anim_state]).append(image)
 
         # Sets active state
-        self._set_active_state(anim_state)
+        # self._set_active_state(anim_state)
 
         # TODO: Remove in future when sprite animation sizes are uniform. Currently, animations take different sizes,
         #  so this system is used to ensure collisions work.
@@ -132,14 +134,12 @@ class Player:
             x, y = self.start_loc
         else:
             """ Else we start from the previous location """
-            x, y = self.rect.x, self.rect.y
+            x, y = self.body.rect.x, self.body.rect.y
 
         first_image_num = self.animations[self._active_state][0]
         self.image = self.images[self._active_state][first_image_num]
 
-        # self.rect = self.image.get_rect()
-
-        self.rect.x, self.rect.y = x, y
+        self.body.update_xy(x, y)
 
     def _get_active_state(self):
         return self._active_state
@@ -150,6 +150,7 @@ class Player:
         using add_animation(). This method takes care of changing animations
         """
         if new_state == PlayerStates.JUMPING:
+            self.jump_fuel = const.JUMP_SPEED # TODO: Remove if not needed
             self.y_momentum = const.JUMP_SPEED
 
         changed_state = self._active_state != new_state
@@ -163,6 +164,8 @@ class Player:
         _get_active_state, _set_active_state, doc="Activate state of this player"
     )
 
+    rect = property(lambda s: s.body.rect)
+
     # TODO: Currently returns Rect so Game class can draw background over previous position, but there might be a
     #  better way
     def update(self, keys, obstacles, time_delta):
@@ -172,7 +175,8 @@ class Player:
 
         If the animation is supposed to be updated, it will be. Otherwise, nothing happens to the sprite's current
         image and rect and animation frame, and we draw the sprite again. """
-        sprite_speed = self._handle_input(keys, obstacles, time_delta)
+        self.time_delta = time_delta
+        sprite_speed = self._handle_input(keys, obstacles)
         move_sprite = any(speed != 0 for speed in sprite_speed)
 
         result = None
@@ -186,7 +190,7 @@ class Player:
 
         return result
 
-    def _handle_input(self, keys, obstacles, time_delta) -> tuple:
+    def _handle_input(self, keys, obstacles) -> tuple:
         """ TODO: Replace all occurrences of max_width with just rect.width 
         Requires fixing some animations first.
         """
@@ -205,9 +209,9 @@ class Player:
         def case_walk_left():
             nonlocal horiz_speed
             if keys[K_UP]:
-                self._set_active_state(PlayerStates.JUMPING)
+                self.active_state = PlayerStates.JUMPING
             elif keys[K_RIGHT]:
-                self._set_active_state(PlayerStates.WALK_RIGHT)
+                self.active_state = PlayerStates.WALK_RIGHT
                 horiz_speed = const.WALKING_SPEED
             elif keys[K_LEFT]:
                 horiz_speed = -const.WALKING_SPEED
@@ -215,9 +219,9 @@ class Player:
         def case_walk_right():
             nonlocal horiz_speed
             if keys[K_UP]:
-                self._set_active_state(PlayerStates.JUMPING)
+                self.active_state = PlayerStates.JUMPING
             elif keys[K_LEFT]:
-                self._set_active_state(PlayerStates.WALK_LEFT)
+                self.active_state = PlayerStates.WALK_LEFT
                 horiz_speed = -const.WALKING_SPEED
             elif keys[K_RIGHT]:
                 horiz_speed = const.WALKING_SPEED
@@ -225,21 +229,25 @@ class Player:
         def case_talking():
             nonlocal horiz_speed
             if keys[K_UP]:
-                self._set_active_state(PlayerStates.JUMPING)
+                # self._set_active_state()
+                self.active_state = PlayerStates.JUMPING
             elif keys[K_RIGHT]:
-                self._set_active_state(PlayerStates.WALK_RIGHT)
+                self.active_state = PlayerStates.WALK_RIGHT
                 horiz_speed = const.WALKING_SPEED
             elif keys[K_LEFT]:
-                self._set_active_state(PlayerStates.WALK_LEFT)
+                self.active_state = PlayerStates.WALK_LEFT
                 horiz_speed = -const.WALKING_SPEED
 
         def case_jump():
-            nonlocal vert_speed, horiz_speed
+            nonlocal horiz_speed
 
             if keys[K_LEFT]:
                 horiz_speed = -const.WALKING_SPEED
             elif keys[K_RIGHT]:
                 horiz_speed = const.WALKING_SPEED
+
+        def case_falling():
+            pass
 
         switcher_dict = {
             PlayerStates.STANDING: case_standing,
@@ -247,10 +255,18 @@ class Player:
             PlayerStates.WALK_RIGHT: case_walk_right,
             PlayerStates.TALKING: case_talking,
             PlayerStates.JUMPING: case_jump,
+            PlayerStates.FALLING: case_falling,
         }
 
         handler = switcher_dict[self.active_state]
         handler()
+
+        if self.active_state == PlayerStates.JUMPING:
+            pass
+            # if self.jump_fuel > 0:
+            #     consumed = self.jump_fuel * (self.time_delta / 1000)
+            #     self.y_momentum += consumed
+            #     self.jump_fuel -= consumed
 
         self.y_momentum += const.GRAVITY
         vert_speed += self.y_momentum
@@ -260,16 +276,25 @@ class Player:
 
         # Handle after-collision processing here.
 
-        horiz_speed *= time_delta / 1000
-        vert_speed *= time_delta / 1000
+        horiz_speed *= self.time_delta / 1000
+        vert_speed *= self.time_delta / 1000
 
-        collisions = self.body.move(horiz_speed, vert_speed, obstacles)
+        collisions = self.body.move(pygame.Vector2(horiz_speed, vert_speed), obstacles)
 
-        if self.active_state == PlayerStates.JUMPING and collisions['bottom']:  # Player was in the air but has landed on a surface
-            self._set_active_state(PlayerStates.TALKING)
-            self.y_momentum = 0
+        self.collisions = collisions
+        print(collisions)
+        print(self.active_state)
 
-        return horiz_speed * time_delta, vert_speed * time_delta
+        if self.active_state == PlayerStates.JUMPING:
+            if collisions['bottom']:  # Player was in the air but has landed on a surface
+                self.active_state = PlayerStates.TALKING
+            if collisions['top']:
+                self.y_momentum = 0
+        elif self.active_state == PlayerStates.FALLING:
+            if collisions['bottom']:
+                self.active_state = PlayerStates.TALKING
+
+        return horiz_speed, vert_speed
 
     def _update_animation(self) -> pygame.Rect:
         """
