@@ -279,11 +279,14 @@ class Player:
         horiz_speed *= self.time_delta / 1000
         vert_speed *= self.time_delta / 1000
 
-        collisions = self.body.move(pygame.Vector2(horiz_speed, vert_speed), obstacles)
+        velocity = pygame.Vector2(horiz_speed, vert_speed)
+
+        collisions = self.body.move(velocity, obstacles)
 
         self.collisions = collisions
-        print(collisions)
-        print(self.active_state)
+        print(self.rect.topleft, velocity)
+        # print(collisions, velocity)
+        # print(self.active_state)
 
         if self.active_state == PlayerStates.JUMPING:
             if collisions['bottom']:  # Player was in the air but has landed on a surface
