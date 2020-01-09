@@ -6,7 +6,7 @@ from . import sprites
 from . import maps
 from . import constants as const
 
-os.environ["SDL_VIDEO_WINDOW_POS"] = "600,0"
+os.environ["SDL_VIDEO_WINDOW_POS"] = "500,0"
 
 
 def setup_player():
@@ -19,7 +19,7 @@ def setup_player():
     walk_right_dir = os.path.join(images_dir, "walk_right")
     walk_left_dir = os.path.join(images_dir, "walk_left")
 
-    ka = sprites.Player(scale=const.SCALE)
+    ka = sprites.Player(x=500, y=600, scale=0.15)
     ka.add_animation(sprites.PlayerStates.TALKING, talking_seq, talk_dir)
     ka.add_animation(
         sprites.PlayerStates.WALK_RIGHT, walk_right, walk_right_dir, move_animation=True

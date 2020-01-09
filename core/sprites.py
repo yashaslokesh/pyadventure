@@ -134,7 +134,7 @@ class Player:
             x, y = self.start_loc
         else:
             """ Else we start from the previous location """
-            x, y = self.body.rect.x, self.body.rect.y
+            x, y = self.rect.x, self.rect.y
 
         first_image_num = self.animations[self._active_state][0]
         self.image = self.images[self._active_state][first_image_num]
@@ -164,17 +164,19 @@ class Player:
         _get_active_state, _set_active_state, doc="Activate state of this player"
     )
 
-    rect = property(lambda s: s.body.rect)
+    rect = property(lambda self: self.body.rect)
 
     # TODO: Currently returns Rect so Game class can draw background over previous position, but there might be a
     #  better way
-    def update(self, keys, obstacles, time_delta):
+    def update(self, keys, obstacles, time_delta, offset):
         """
         Move_sprite will be true if the speed has some non-zero value. Granted, it is only ever a two-element list,
         but using the any() function makes it clean to read.
 
         If the animation is supposed to be updated, it will be. Otherwise, nothing happens to the sprite's current
         image and rect and animation frame, and we draw the sprite again. """
+        self.body.update_xy(self.rect.x - offset[0], self.rect.y - offset[1])
+
         self.time_delta = time_delta
         sprite_speed = self._handle_input(keys, obstacles)
         move_sprite = any(speed != 0 for speed in sprite_speed)
@@ -247,7 +249,12 @@ class Player:
                 horiz_speed = const.WALKING_SPEED
 
         def case_falling():
-            pass
+            nonlocal horiz_speed
+
+            if keys[K_LEFT]:
+                horiz_speed = -const.WALKING_SPEED
+            elif keys[K_RIGHT]:
+                horiz_speed = const.WALKING_SPEED
 
         switcher_dict = {
             PlayerStates.STANDING: case_standing,
@@ -284,7 +291,7 @@ class Player:
         collisions = self.body.move(velocity, obstacles)
 
         self.collisions = collisions
-        print(self.rect.topleft, velocity)
+        # print(self.rect.topleft, velocity)
         # print(collisions, velocity)
         # print(self.active_state)
 
@@ -322,6 +329,10 @@ class Player:
 
     def draw(self, screen: pygame.Surface):
         screen.blit(self.image, self.body.rect)
+
+    def reset(self):
+        self.rect.topleft = self.start_loc
+        self.active_state = PlayerStates.FALLING
 
 
 class Platform:

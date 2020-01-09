@@ -25,7 +25,6 @@ class MapController(object):
             map_config = f.readlines()
             map_config = list(map(lambda s: s.strip(), map_config))
 
-        print(filename)
         self.map = map_config
 
         self.tiles = setup.setup_tiles()
@@ -47,7 +46,6 @@ class MapController(object):
                 obs = map_image.blit(tile_surf, (x * const.TILE_WIDTH, y * const.TILE_HEIGHT))
                 if tile == MapTile.WALL:
                     self.obstacles.append(obs)
-                    print(obs)
 
         # Returns the configured background image
         self.map_image = map_image
@@ -60,11 +58,13 @@ class MapController(object):
 
         self.rect = self.rect.move(move_speed)
 
+        return move_speed
+
     def _handle_input(self, keys, time_delta):
         horz_scroll = 0
         vert_scroll = 0
 
-        scroll_mag = const.WALKING_SPEED * time_delta / 1000
+        scroll_mag = const.WALKING_SPEED * (time_delta / 1000)
 
         # Move this map left to make it appear as if player is moving right
         if keys[K_RIGHT]:
